@@ -1,0 +1,9 @@
+global treatDict
+global raw_X
+global raw_dates
+global dataTest
+global outerDict
+global medSequenceFileName
+global labSequenceFileName
+global medSequenceMatrix
+global labSequenceMatrix

@@ -13,8 +13,6 @@
 #       of said functions. The functions are included in a package called helperFunctions.
 #***************************************************************************************#
 
-#from getTreatments import getTreatments
-#from getVectors import getVectors
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,6 +35,7 @@ from docutils.writers.docutils_xml import RawXmlError
 import os
 import glob
 import helperFunctions as hf
+import globalVariables
 
 #parameters for execution:
 alpha = .7 #sets the weighting between lab and treatment values
@@ -45,6 +44,10 @@ whichDist = "E" #decides whether to use pearsons, tau, or spearman's correlation
 whichNorm = "N" #chooses a normalization method
 overlap = 0 #sets the amount of overlap between bins
 segLength = 6 #sets the number of 28-day segments in a bin
-graph = 0 #decides whether to use graphing capabilitess
+graph = 0 #decides whether to use graphing capabilites
+globalVariables.treatDict = hf.getTreatments()
+hf.extractRawInfo()
+hf.rawDelete()
+hf.rawBinMaker(segLength, overlap)
 toBeNormalized = hf.buildFLCMatrix(segLength)
 hf.getClustersOnTrend(toBeNormalized, whichDist, whichNorm)

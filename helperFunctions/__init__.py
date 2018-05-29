@@ -1,3 +1,11 @@
 from helperFunctions.dataProcessing import buildFLCMatrix
 
 from helperFunctions.labClustering import getClustersOnTrend
+
+from helperFunctions.dataProcessing import extractRawInfo
+
+from helperFunctions.dataProcessing import getTreatments
+
+from helperFunctions.dataProcessing import rawDelete
+
+from helperFunctions.dataProcessing import rawBinMaker
