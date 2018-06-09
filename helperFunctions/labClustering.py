@@ -4,9 +4,6 @@
 #               Cece Landau
 #               Kevin Lau
 #
-# Version History:
-#       05/15/2018      First Release
-#
 # Description:
 #       All functions necessary for clustering of lab values. Clusters all patient
 #       bins first by trend between consecutive lab values, and then further sub
@@ -17,7 +14,11 @@ from helperFunctions import distanceCalculations as dc
 from scipy import stats
 from sklearn import preprocessing
 import numpy as np
-
+import time
+from hdbscan import HDBSCAN
+import os
+import glob
+from helperFunctions import graphingFunctions as gr
 #Will run a normalization on the data and then cluster. Users can choose
 #which normalization to run with whichNorm. The current options for normalization
 #are:
@@ -25,7 +26,7 @@ import numpy as np
 #   "Z" = Z-score normalization
 #   "U" = unit norm scaling
 denominatorTolerance = 1e-6 # how low the max value can be
-def getClustersOnTrend(toBeNormalized, whichDist, whichNorm):
+def getClustersOnTrend(toBeNormalized, whichDist, whichNorm, segLength, graph):
     if(whichNorm == "M"):
         for row in range(0, toBeNormalized.shape[0]): #go through every row in the matrix
             minFLC = min(toBeNormalized[row][1:].astype(float))
@@ -50,45 +51,52 @@ def getClustersOnTrend(toBeNormalized, whichDist, whichNorm):
         for row in range(0, toBeNormalized.shape[0]):
             for column in range(1, len(toBeNormalized[row])): #replace each index in toBeNormalized with unit norm value
                 toBeNormalized[row][column] = unitNorm[row][column - 1]
-    dc.calculateFLCDistance(toBeNormalized, whichDist)
+    distanceMatrix = dc.calculateFLCDistance(toBeNormalized, whichDist)
+    clusters = clusterLabValues(distanceMatrix, toBeNormalized[:,0])
 
-#    deleterow = 0
-#    distancenames = []
-#    for i in range(0, toBeNormalized.shape[0]):
-#        if (i < toBeNormalized.shape[0] - deleterow): 
-#            distancenames.append(toBeNormalized[i][0])
-#            if(toBeNormalized[i][0] == 'MM-326.1' or toBeNormalized[i][0] == 'MM-326.3' ):
-#                   distancenames.remove(toBeNormalized[i][0])
-#                   toBeNormalized = np.delete(toBeNormalized, i, 0)                   
-#                   deleterow = deleterow + 1
-#            
-#            minFLC = min(toBeNormalized[i][1:].astype(float))
-#            for j in range(1, len(toBeNormalized[i])):
-#                toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float) - minFLC.astype(float))
-#            maxFLC = max(toBeNormalized[i][1:].astype(float))
-#            
-#            for j in range(1, len(toBeNormalized[i])):           
-#                if(maxFLC.astype(float) != 0):
-#                    toBeNormalized[i][j] = (toBeNormalized[i][j].astype(float))/maxFLC.astype(float)
-#    justNorm = np.delete(toBeNormalized, 0, axis=1).astype(float)
-#    pearCor = np.zeros((justNorm.shape[0], justNorm.shape[0]))
-#    for i in range(0, justNorm.shape[0]):        
-#        all_zeros = not np.any(justNorm[i,:])
-#        if (all_zeros):
-#            print(toBeNormalized[i,:])
-#            print(justNorm[i,:])
-#            print(i)
-#            print(all_zeros)
-#        for j in range(0, justNorm.shape[0]):
-#            pearson = stats.pearsonr(justNorm[i,:], justNorm[j,:])
-#            correlation = pearson[0]
-#           pearCor[i, j] = correlation
-#            pearCor[j, i] = correlation            
-#   print(" is it finite??")
-#    print(np.all(np.isfinite(pearCor)))
-    #pearsonTrend = pearsonsCorr(justNorm)
-#    distPearson = distanceMatrix(pearCor)
-#    #clusters = initialHDBProcessing(toBeNormalized, "hdbscanBinnedData")
-#    clusters = initialHDBProcessing(distPearson, "distanceMinMax", distancenames)
-#    sortedClusters = clusters[clusters[:,1].astype(float).argsort()]
-#    return sortedClusters
+    #This is for creating the clustering files
+    path = glob.glob('./clusters/*') #remove the cluster files currently in the folder
+    for file in path:
+        os.remove(file)
+    sortedClusters = clusters[clusters[:,1].astype(float).argsort()]
+    currentCluster = int(sortedClusters[0 , 1]) #gets the first available cluster
+    clusterMatrix = np.empty(segLength + 3) #will contain the cluster data for each cluster
+    for row in range(0, sortedClusters.shape[0]):
+        if(currentCluster != int(sortedClusters[row, 1]) or row == sortedClusters.shape[0] - 1): #the current data point is in another cluster
+            if(row == sortedClusters.shape[0] - 1): #for the last patient segment
+                buildRow = np.empty(segLength + 3).astype(str)
+                buildRow[0] = sortedClusters[row, 0]
+                buildRow[1] = sortedClusters[row, 1]
+                buildRow[2] = sortedClusters[row, 2]
+                for row in range(0, toBeNormalized.shape[0]):
+                    if(toBeNormalized[row, 0] == buildRow[0]):
+                        for dataPoint in range(0, segLength):
+                            buildRow[dataPoint + 3] = toBeNormalized[row,dataPoint + 1]
+                clusterMatrix = np.vstack((clusterMatrix, buildRow))
+            clusterMatrix = np.delete(clusterMatrix, 0, 0) #numpy.empty makes the first row random data so we get rid of it
+            if(graph == 1):
+                gr.graphClusters(clusterMatrix, currentCluster, segLength)
+            np.savetxt("./clusters/cluster" + str(currentCluster) + ".csv", clusterMatrix.astype(str), delimiter = ',', fmt='%s')
+            clusterMatrix = np.empty(segLength + 3)
+            currentCluster = currentCluster + 1
+        buildRow = np.empty(segLength + 3).astype(str)
+        buildRow[0] = sortedClusters[row, 0]
+        buildRow[1] = sortedClusters[row, 1]
+        buildRow[2] = sortedClusters[row, 2]
+        for row in range(0, toBeNormalized.shape[0]):
+            if(toBeNormalized[row, 0] == buildRow[0]):
+                for dataPoint in range(0, segLength):
+                    buildRow[dataPoint + 3] = toBeNormalized[row,dataPoint + 1]
+        clusterMatrix = np.vstack((clusterMatrix, buildRow))
+
+#Clusters values based on FLC values. Takes in a distance matrix and a vecotr with all the corresponding
+#patient numbers and outputs a cluster matrix
+def clusterLabValues(workingMatrix, distanceNames):
+    hdb_t1 = time.time()
+    hdb = HDBSCAN(min_cluster_size=3, metric='precomputed').fit(workingMatrix)
+    hdb_labels = hdb.labels_
+    hdb_prob = hdb.probabilities_
+    hdb_elapsed_time = time.time() - hdb_t1
+    n_clusters_hdb_ = len(set(hdb_labels)) - (1 if -1 in hdb_labels else 0)
+    merged = np.array(list(zip(distanceNames, hdb_labels, hdb_prob)))
+    return(merged)

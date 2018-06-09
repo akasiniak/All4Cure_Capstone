@@ -4,9 +4,6 @@
 #               Cece Landau
 #               Kevin Lau
 #
-# Version History:
-#       05/15/2018      First Release
-#
 # Description:
 #       Functions pertaining to the calculation of distances between
 #       FLC and treatment values
@@ -38,14 +35,12 @@ def calculateFLCDistance(normalizedMatrix, whichDist):
             if(whichDist == "K"):
                 correlation = 1 - stats.kendalltau(normalizedMatrix[row,1:].astype(float), normalizedMatrix[column,1:].astype(float))[0]
                 if(correlation < kendallTauTolerance):
-                    correlation = 0             
-            if(whichDist == "E"):
-                #HAVE NOT TESTED THIS YET
-                correlation = distance.euclidean(normalizedMatrix[row,1:].astype(float), normalizedMatrix[column,1:].astype(float))                
-            if(correlation > 1):
+                    correlation = 0                            
+            if(correlation > 1 or np.isnan(correlation)):
                 correlation = 1
             distanceMatrix[row,column] = correlation
             distanceMatrix[column, row] = correlation
+    return distanceMatrix
 
             
         

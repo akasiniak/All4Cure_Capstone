@@ -9,3 +9,5 @@ from helperFunctions.dataProcessing import getTreatments
 from helperFunctions.dataProcessing import rawDelete
 
 from helperFunctions.dataProcessing import rawBinMaker
+
+from helperFunctions.graphingFunctions import graphClusters

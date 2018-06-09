@@ -4,9 +4,6 @@
 #               Cece Landau
 #               Kevin Lau
 #
-# Version History:
-#       05/15/2018      First Release
-#
 # Description:
 #       Runs the data collection algorithms to prepare for clustering of patients.
 #       Requires the following types of files:
@@ -281,18 +278,6 @@ def properSampleMaker(patientID, FLC_Value, Date, segmentLength, overlapBy):
     finalData = finalData.values
     innerDict = {}
     datesForTreat = []
-    if (patientID == 'MM-120'):
-#         with open('MM120_test.csv', 'w', newline='') as csvfile:
-#             csvfile.write('\n'.join('{}, {}, {}'.format(resample[x], interpolated[x], downSample[x]) for x in range(0, len(interpolated.values))))
-        #print("Original")
-        #print(df)
-        #print("Daily Upsample")
-        #print(resample)
-        #print("Interpolating Daily")
-        #print(interpolated)
-        #print("Down Sample 28 Day Interpolation")
-        #print(downSample)
-        pass
 
     for x in range(len(finalData) - 1):
         #treatmentArray = treatmentAdder(finalData[:, 0], np.array(treatDict[patientID]), len(finalData) - 1, patientID)
@@ -338,8 +323,6 @@ def properSampleMaker(patientID, FLC_Value, Date, segmentLength, overlapBy):
 
 #builds the treatment array
 def tryTreatment(Dates, Patient):
-    #print
-    # (Dates)
     binDates = []
     treatments = []
     temp = {}
