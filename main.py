@@ -42,6 +42,19 @@ whichNorm = "M" #chooses a normalization method
 overlap = 0 #sets the amount of overlap between bins
 segLength = 6 #sets the number of 28-day segments in a bin
 graph = 1 #decides whether to use graphing capabilites
+noBits = 24 #Set to desired number of bits for the encoded treatment binary string
+signBitOption = 1 #Set to 1 if you want to use the sign bit (AKA if you
+# want to keep track of unknown drugs by using a sign bit.)
+aggregateTreatmentsOption = 0 #Set to 0 for keeping monthly granularity. Set
+# to 1 to encode all 6 months as one aggregate binary string
+binaryDistanceMethod = 2 #Use to choose the treatment distance calcluation method
+# Set binaryDistanceMethod = 1 for Sokal Michener
+# Set binaryDistanceMethod = 2 for Jaccard
+# Set binaryDistanceMethod = 3 for Rogers Tanimoto
+# Set binaryDistanceMethod = 4 for Sokal Sneath II
+useManualDistanceMethod = 1
+# Set useManualDistanceMethod = 1 to compute distances manually, set useManualDistanceMethod = 0
+# to use the SciPy distance calculations for treatments
 if(graph == 1):
     path = glob.glob('./graphs/*')
     for file in path:
@@ -52,3 +65,5 @@ hf.rawDelete()
 hf.rawBinMaker(segLength, overlap)
 toBeNormalized = hf.buildFLCMatrix(segLength)
 hf.getClustersOnTrend(toBeNormalized, whichDist, whichNorm, segLength, graph)
+treatDistMatrix = hf.getDistancesFromMeds(noBits, signBitOption, aggregateTreatmentsOption, binaryDistanceMethod, useManualDistanceMethod, segLength)
+hf.clusterFromDistMatrix(treatDistMatrix)
